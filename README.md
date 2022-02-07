@@ -22,25 +22,25 @@ https://github.com/adafruit/Adafruit-GFX-Library
 No fancy low level pin manipulation for now. You can use any pin.
 
 Default:
-D0 - 41
-D1 - 40
-D2 - 39
-D3 - 38
-D4 - 37
-D5 - 36
-D6 - 35
-D7 - 34
-RD - 8
-WR - 7
-DC - 9 (a.k.a RS on some boards)
-CS - 10
+D0 - 41\
+D1 - 40\
+D2 - 39\
+D3 - 38\
+D4 - 37\
+D5 - 36\
+D6 - 35\
+D7 - 34\
+RD - 8\
+WR - 7\
+DC - 9 (a.k.a RS on some boards)\
+CS - 10\
 RST - 6
 
 ----
 
 # Benchmark using ILI9341(240x320)
 
-* Teensy 4.1 results are divided in half because it is tested on a 320x480 display (with just normal "slow" API like digitalWrite())
+\*Teensy 4.1 results are divided in half because it is tested on a 320x480 display (with just normal "slow" API like digitalWrite())
 |Benchmark|Teensy 4.1|STM32F103|STM32F303|STM32F401|STM32F407|STM32F446|ATmega328|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 |Screen fill            |464461|2241101|1854703|1208997|647337 |604184 |1379560|
