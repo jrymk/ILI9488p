@@ -46,13 +46,22 @@ Define pins and Output Data Registers
 #define TFT_D6 35
 #define TFT_D7 34
 
+#define TFT_D8 31
+#define TFT_D9 30
+#define TFT_D10 29
+#define TFT_D11 28
+#define TFT_D12 27
+#define TFT_D13 26
+#define TFT_D14 25
+#define TFT_D15 24
+
 #define TFT_RD 8
 #define TFT_WR 7
 #define TFT_DC 9
 #define TFT_CS 10
 #define TFT_RST 6
 
-#if F_CPU > 600000000 // even at 720mhz artifacts show up without delay
+#if F_CPU > 2000000000 // even at 720mhz artifacts show up without delay
 #define DELAY delayNanoseconds(1)
 #else
 #define DELAY (void)0 // NOP
@@ -115,6 +124,7 @@ private:
   void setWriteDataBus(void);
   void setReadDataBus(void);
   void write8(uint8_t);
+  void write16(uint16_t);
   void writeCmdByte(uint8_t c);
   void WriteCmd(uint16_t c);
   void writeDataByte(uint8_t d);
@@ -126,6 +136,7 @@ private:
   void init_table16(const void *table, int16_t size);
   void writeCmdWord(uint16_t c);
   uint8_t read8(void);
+  uint16_t read16(void);
   uint8_t read8bits(void);
   uint16_t read16bits(void);
   uint16_t readReg16(uint16_t reg);
@@ -134,7 +145,7 @@ private:
   uint32_t readReg40(uint16_t reg);
   uint16_t _lcd_ID, _lcd_capable, _lcd_rev, _lcd_madctl, _lcd_drivOut, _MC, _MP, _MW, _SC, _EC, _SP, _EP;
   int16_t _lcd_width = 0, _lcd_height = 0, _lcd_offset = 0;
-  uint32_t _pins[8];
+  uint32_t _pins[16];
 };
 
 #endif // endif of the header file

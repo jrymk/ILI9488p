@@ -49,24 +49,27 @@ ILI9488p::ILI9488p(void)
   _pins[5] = TFT_D5;
   _pins[6] = TFT_D6;
   _pins[7] = TFT_D7;
+
+  _pins[8] = TFT_D8;
+  _pins[9] = TFT_D9;
+  _pins[10] = TFT_D10;
+  _pins[11] = TFT_D11;
+  _pins[12] = TFT_D12;
+  _pins[13] = TFT_D13;
+  _pins[14] = TFT_D14;
+  _pins[15] = TFT_D15;
 }
 
 void ILI9488p::setWriteDataBus(void)
 {
-  Serial.printf("write\n");
-  for (int i = 0; i < 8; i++)
-  {
+  for (int i = 0; i < 16; i++)
     pinMode(_pins[i], OUTPUT);
-  }
 }
 
 void ILI9488p::setReadDataBus(void)
 {
-  Serial.printf("read\n");
-  for (int i = 0; i < 8; i++)
-  {
+  for (int i = 0; i < 16; i++)
     pinMode(_pins[i], INPUT);
-  }
 }
 
 void ILI9488p::write8(uint8_t bytes)
@@ -82,6 +85,27 @@ void ILI9488p::write8(uint8_t bytes)
   // delayNanoseconds(1);
 }
 
+void ILI9488p::write16(uint16_t bytes)
+{
+  digitalWriteFast(TFT_D0, (bytes >> 0) & 1);
+  digitalWriteFast(TFT_D1, (bytes >> 1) & 1);
+  digitalWriteFast(TFT_D2, (bytes >> 2) & 1);
+  digitalWriteFast(TFT_D3, (bytes >> 3) & 1);
+  digitalWriteFast(TFT_D4, (bytes >> 4) & 1);
+  digitalWriteFast(TFT_D5, (bytes >> 5) & 1);
+  digitalWriteFast(TFT_D6, (bytes >> 6) & 1);
+  digitalWriteFast(TFT_D7, (bytes >> 7) & 1);
+
+  digitalWriteFast(TFT_D8, (bytes >> 8) & 1);
+  digitalWriteFast(TFT_D9, (bytes >> 9) & 1);
+  digitalWriteFast(TFT_D10, (bytes >> 10) & 1);
+  digitalWriteFast(TFT_D11, (bytes >> 11) & 1);
+  digitalWriteFast(TFT_D12, (bytes >> 12) & 1);
+  digitalWriteFast(TFT_D13, (bytes >> 13) & 1);
+  digitalWriteFast(TFT_D14, (bytes >> 14) & 1);
+  digitalWriteFast(TFT_D15, (bytes >> 15) & 1);
+}
+
 void ILI9488p::writeCmdByte(uint8_t c)
 {
   CS_ACTIVE;
@@ -89,7 +113,7 @@ void ILI9488p::writeCmdByte(uint8_t c)
   RD_IDLE;
   WR_IDLE;
 
-  write8(c);
+  write16(c);
   WR_ACTIVE;
   DELAY;
   WR_IDLE;
@@ -103,12 +127,7 @@ void ILI9488p::writeCmdWord(uint16_t c)
   RD_IDLE;
   WR_IDLE;
 
-  write8(c >> 8);
-  WR_ACTIVE;
-  DELAY;
-  WR_IDLE;
-
-  write8(c & 0xff);
+  write16(c);
   WR_ACTIVE;
   DELAY;
   WR_IDLE;
@@ -136,7 +155,7 @@ void ILI9488p::writeDataByte(uint8_t c)
   RD_IDLE;
   WR_IDLE;
 
-  write8(c);
+  write16(c);
   WR_ACTIVE;
   DELAY;
   WR_IDLE;
@@ -150,12 +169,7 @@ void ILI9488p::writeDataWord(uint16_t c)
   RD_IDLE;
   WR_IDLE;
 
-  write8(c >> 8);
-  WR_ACTIVE;
-  DELAY;
-  WR_IDLE;
-
-  write8(c & 0xff);
+  write16(c);
   WR_ACTIVE;
   DELAY;
   WR_IDLE;
@@ -1188,6 +1202,30 @@ uint8_t ILI9488p::read8(void)
   return output;
 }
 
+uint16_t ILI9488p::read16(void)
+{
+  uint16_t output = 0x0000;
+  output |= digitalReadFast(TFT_D0) << 0;
+  output |= digitalReadFast(TFT_D1) << 1;
+  output |= digitalReadFast(TFT_D2) << 2;
+  output |= digitalReadFast(TFT_D3) << 3;
+  output |= digitalReadFast(TFT_D4) << 4;
+  output |= digitalReadFast(TFT_D5) << 5;
+  output |= digitalReadFast(TFT_D6) << 6;
+  output |= digitalReadFast(TFT_D7) << 7;
+
+  output |= digitalReadFast(TFT_D8) << 8;
+  output |= digitalReadFast(TFT_D9) << 9;
+  output |= digitalReadFast(TFT_D10) << 10;
+  output |= digitalReadFast(TFT_D11) << 11;
+  output |= digitalReadFast(TFT_D12) << 12;
+  output |= digitalReadFast(TFT_D13) << 13;
+  output |= digitalReadFast(TFT_D14) << 14;
+  output |= digitalReadFast(TFT_D15) << 15;
+
+  return output;
+}
+
 uint8_t ILI9488p::read8bits(void)
 {
   CD_DATA;
@@ -1206,6 +1244,17 @@ uint8_t ILI9488p::read8bits(void)
 
 uint16_t ILI9488p::read16bits(void)
 {
+  /*uint16_t data;
+  CD_DATA;
+  CS_ACTIVE;
+  WR_IDLE;
+  RD_ACTIVE;
+  delayNanoseconds(10);
+  data = read16();
+  CS_IDLE;
+  RD_IDLE;
+  return data;*/
+
   uint8_t lo;
   uint8_t hi;
   CD_DATA;
@@ -1224,20 +1273,15 @@ uint16_t ILI9488p::read16bits(void)
 
 uint16_t ILI9488p::readReg16(uint16_t reg)
 {
-  uint16_t ret;
   setWriteDataBus();
   writeCmdWord(reg);
   setReadDataBus();
-  uint8_t hi = read8bits();
+  uint16_t ret = read16bits();
   // Serial.print("readReg16 hi=");
   // Serial.println(hi, HEX);
 
-  uint8_t lo = read8bits();
-  // Serial.print("readReg16 lo=");
-  // Serial.println(lo, HEX);
-
   setWriteDataBus();
-  return (hi << 8) | lo;
+  return ret;
 }
 
 uint16_t ILI9488p::readReg16Index(uint16_t reg, int8_t index)
@@ -1246,22 +1290,16 @@ uint16_t ILI9488p::readReg16Index(uint16_t reg, int8_t index)
   setWriteDataBus();
   writeCmdWord(reg);
   setReadDataBus();
-  uint8_t hi;
-  uint8_t lo;
   do
   {
-    hi = read8bits();
+    ret = read16bits();
     // Serial.print("readReg16Index hi=");
     // Serial.println(hi, HEX);
-
-    lo = read8bits();
-    // Serial.print("readReg16Index lo=");
-    // Serial.println(lo, HEX);
 
   } while (--index >= 0); // need to test with SSD1963
   setWriteDataBus();
 
-  return (hi << 8) | lo;
+  return ret;
 }
 
 uint32_t ILI9488p::readReg32(uint16_t reg)
