@@ -53,7 +53,7 @@ ILI9488p::ILI9488p(void)
 
 void ILI9488p::setWriteDataBus(void)
 {
-  Serial.printf("write\n");
+  // Serial.printf("write\n");
   for (int i = 0; i < 8; i++)
   {
     pinMode(_pins[i], OUTPUT);
@@ -62,7 +62,7 @@ void ILI9488p::setWriteDataBus(void)
 
 void ILI9488p::setReadDataBus(void)
 {
-  Serial.printf("read\n");
+  // Serial.printf("read\n");
   for (int i = 0; i < 8; i++)
   {
     pinMode(_pins[i], INPUT);
