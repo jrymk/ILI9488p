@@ -52,7 +52,12 @@ Define pins and Output Data Registers
 #define TFT_CS 10
 #define TFT_RST 6
 
+#if F_CPU > 600000000 // even at 720mhz artifacts show up without delay
+#define DELAY delayNanoseconds(1)
+#else
 #define DELAY (void)0 // NOP
+
+#endif
 
 #define RD_ACTIVE digitalWriteFast(TFT_RD, LOW)
 #define RD_IDLE digitalWriteFast(TFT_RD, HIGH)

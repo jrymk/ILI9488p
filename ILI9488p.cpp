@@ -79,6 +79,7 @@ void ILI9488p::write8(uint8_t bytes)
   digitalWriteFast(TFT_D5, (bytes >> 5) & 1);
   digitalWriteFast(TFT_D6, (bytes >> 6) & 1);
   digitalWriteFast(TFT_D7, (bytes >> 7) & 1);
+  // delayNanoseconds(1);
 }
 
 void ILI9488p::writeCmdByte(uint8_t c)
@@ -97,8 +98,8 @@ void ILI9488p::writeCmdByte(uint8_t c)
 
 void ILI9488p::writeCmdWord(uint16_t c)
 {
-  CS_ACTIVE;
   CD_COMMAND;
+  CS_ACTIVE;
   RD_IDLE;
   WR_IDLE;
 
@@ -1189,17 +1190,17 @@ uint8_t ILI9488p::read8(void)
 
 uint8_t ILI9488p::read8bits(void)
 {
-  CS_ACTIVE;
   CD_DATA;
+  CS_ACTIVE;
   WR_IDLE;
   RD_ACTIVE;
 
   // This delay is required for STM32F4 (this is not a STM32F4)
   // delayMicroseconds(1);
-
+  delayNanoseconds(10);
   uint8_t result = read8();
-  RD_IDLE;
   CS_IDLE;
+  RD_IDLE;
   return result;
 }
 
@@ -1207,15 +1208,17 @@ uint16_t ILI9488p::read16bits(void)
 {
   uint8_t lo;
   uint8_t hi;
-  CS_ACTIVE;
   CD_DATA;
+  CS_ACTIVE;
   WR_IDLE;
   RD_ACTIVE;
+  delayNanoseconds(10);
   hi = read8();
   // all MIPI_DCS_REV1 style params are 8-bit
+  delayNanoseconds(10);
   lo = read8();
-  RD_IDLE;
   CS_IDLE;
+  RD_IDLE;
   return (hi << 8) | lo;
 }
 
