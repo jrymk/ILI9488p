@@ -1,23 +1,3 @@
-/*
- * 8bit TFT Library for Arduino_Core_STM32
- *
- * based on MCUFRIEND_kbv.cpp by David Prentice
- * https://github.com/prenticedavid/MCUFRIEND_kbv
-
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 #ifndef _ILI9488P_H_
 #define _ILI9488P_H_
 
@@ -74,16 +54,16 @@ Define pins and Output Data Registers
 
 #define DELAY (void)0 // NOP
 
-#define RD_ACTIVE digitalWrite(TFT_RD, LOW)
-#define RD_IDLE digitalWrite(TFT_RD, HIGH)
-#define WR_ACTIVE digitalWrite(TFT_WR, LOW)
-#define WR_IDLE digitalWrite(TFT_WR, HIGH)
-#define CD_COMMAND digitalWrite(TFT_DC, LOW)
-#define CD_DATA digitalWrite(TFT_DC, HIGH)
-#define CS_ACTIVE digitalWrite(TFT_CS, LOW)
-#define CS_IDLE digitalWrite(TFT_CS, HIGH)
-#define RST_ACTIVE digitalWrite(TFT_RST, LOW)
-#define RST_IDLE digitalWrite(TFT_RST, HIGH)
+#define RD_ACTIVE digitalWriteFast(TFT_RD, LOW)
+#define RD_IDLE digitalWriteFast(TFT_RD, HIGH)
+#define WR_ACTIVE digitalWriteFast(TFT_WR, LOW)
+#define WR_IDLE digitalWriteFast(TFT_WR, HIGH)
+#define CD_COMMAND digitalWriteFast(TFT_DC, LOW)
+#define CD_DATA digitalWriteFast(TFT_DC, HIGH)
+#define CS_ACTIVE digitalWriteFast(TFT_CS, LOW)
+#define CS_IDLE digitalWriteFast(TFT_CS, HIGH)
+#define RST_ACTIVE digitalWriteFast(TFT_RST, LOW)
+#define RST_IDLE digitalWriteFast(TFT_RST, HIGH)
 
 #define RD_STROBE \
   {               \

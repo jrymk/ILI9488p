@@ -19,7 +19,7 @@ https://github.com/adafruit/Adafruit-GFX-Library
 
 # Wiring for 8bit Parallel TFT   
 
-No fancy low level pin manipulation for now. You can use any pin.
+You can use any pin.
 
 Default:
 D0 - 41\
@@ -40,18 +40,18 @@ RST - 6
 
 # Benchmark using ILI9341(240x320)
 
-\*Teensy 4.1 results are divided in half because it is tested on a 320x480 display (with just normal "slow" API like digitalWrite())
+\*Teensy 4.1 results are measured on a 320x480 display, which is double the other benchmark contestants.
 |Benchmark|Teensy 4.1|STM32F103|STM32F303|STM32F401|STM32F407|STM32F446|ATmega328|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-|Screen fill            |464461|2241101|1854703|1208997|647337 |604184 |1379560|
-|Text                   |12969|138955 |106085 |69792  |38303  |35748  |344024 |
-|Lines                  |259279|1337689|999535 |660532 |361830 |337721 |3390180|
-|Horiz/Vert Lines       |38418|185661 |152992 |99924  |53548  |49978  |144664 |
-|Rectangles (outline)   |21069|120109 |98346  |64325  |34627  |32311  |104260 |
-|Rectangles (filled)    |1126463|4756300|3935313|2583183|1386162|1293716|3267476|
-|Circles (filled)       |117194|610890 |471781 |310337 |167938 |156716 |1211484|
-|Circles (outline)      |111071|588951 |439863 |290416 |159225 |148621 |1475108|
-|Triangles (outline)    |51507|302008 |225153 |148665 |81285  |75894  |1075596|
-|Triangles (filled)     |360553|1550456|1262459|821918 |440290 |410928 |1721636|
-|Rounded rects (outline)|46397|262224 |201583 |132647 |72231  |67431  |506428 |
-|Rounded rects (filled) |1119823|4711541|3899510|2555561|1372596|1281003|3795228|
+|Screen fill            |107307|2241101|1854703|1208997|647337 |604184 |1379560|
+|Text                   |3781|138955 |106085 |69792  |38303  |35748  |344024 |
+|Lines                  |72065|1337689|999535 |660532 |361830 |337721 |3390180|
+|Horiz/Vert Lines       |8857|185661 |152992 |99924  |53548  |49978  |144664 |
+|Rectangles (outline)   |5199|120109 |98346  |64325  |34627  |32311  |104260 |
+|Rectangles (filled)    |273222|4756300|3935313|2583183|1386162|1293716|3267476|
+|Circles (filled)       |31283|610890 |471781 |310337 |167938 |156716 |1211484|
+|Circles (outline)      |33174|588951 |439863 |290416 |159225 |148621 |1475108|
+|Triangles (outline)    |13665|302008 |225153 |148665 |81285  |75894  |1075596|
+|Triangles (filled)     |83088|1550456|1262459|821918 |440290 |410928 |1721636|
+|Rounded rects (outline)|12659|262224 |201583 |132647 |72231  |67431  |506428 |
+|Rounded rects (filled) |273115|4711541|3899510|2555561|1372596|1281003|3795228|

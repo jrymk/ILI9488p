@@ -1,23 +1,3 @@
-/*
- * 8bit TFT Library for Arduino_Core_STM32
- *
- * based on MCUFRIEND_kbv.cpp by David Prentice
- * https://github.com/prenticedavid/MCUFRIEND_kbv
-
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include <ILI9488p.h>
 
 #define MIPI_DCS_REV1 (1 << 0)
@@ -73,6 +53,7 @@ ILI9488p::ILI9488p(void)
 
 void ILI9488p::setWriteDataBus(void)
 {
+  Serial.printf("write\n");
   for (int i = 0; i < 8; i++)
   {
     pinMode(_pins[i], OUTPUT);
@@ -81,6 +62,7 @@ void ILI9488p::setWriteDataBus(void)
 
 void ILI9488p::setReadDataBus(void)
 {
+  Serial.printf("read\n");
   for (int i = 0; i < 8; i++)
   {
     pinMode(_pins[i], INPUT);
@@ -89,10 +71,14 @@ void ILI9488p::setReadDataBus(void)
 
 void ILI9488p::write8(uint8_t bytes)
 {
-  for (int i = 0; i < 8; i++)
-  {
-    digitalWriteFast(_pins[i], (bytes >> i) & 1);
-  }
+  digitalWriteFast(TFT_D0, (bytes >> 0) & 1);
+  digitalWriteFast(TFT_D1, (bytes >> 1) & 1);
+  digitalWriteFast(TFT_D2, (bytes >> 2) & 1);
+  digitalWriteFast(TFT_D3, (bytes >> 3) & 1);
+  digitalWriteFast(TFT_D4, (bytes >> 4) & 1);
+  digitalWriteFast(TFT_D5, (bytes >> 5) & 1);
+  digitalWriteFast(TFT_D6, (bytes >> 6) & 1);
+  digitalWriteFast(TFT_D7, (bytes >> 7) & 1);
 }
 
 void ILI9488p::writeCmdByte(uint8_t c)
@@ -1190,10 +1176,14 @@ void ILI9488p::invertDisplay(boolean i)
 uint8_t ILI9488p::read8(void)
 {
   uint8_t output = 0x00;
-  for (int i = 0; i < 8; i++)
-  {
-    output |= digitalReadFast(_pins[i]) << i;
-  }
+  output |= digitalReadFast(TFT_D0) << 0;
+  output |= digitalReadFast(TFT_D1) << 1;
+  output |= digitalReadFast(TFT_D2) << 2;
+  output |= digitalReadFast(TFT_D3) << 3;
+  output |= digitalReadFast(TFT_D4) << 4;
+  output |= digitalReadFast(TFT_D5) << 5;
+  output |= digitalReadFast(TFT_D6) << 6;
+  output |= digitalReadFast(TFT_D7) << 7;
   return output;
 }
 
