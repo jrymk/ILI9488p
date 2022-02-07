@@ -74,16 +74,16 @@ Define pins and Output Data Registers
 
 #define DELAY (void)0 // NOP
 
-#define RD_ACTIVE digitalWrite(TFT_RD, LOW)
-#define RD_IDLE digitalWrite(TFT_RD, HIGH)
-#define WR_ACTIVE digitalWrite(TFT_WR, LOW)
-#define WR_IDLE digitalWrite(TFT_WR, HIGH)
-#define CD_COMMAND digitalWrite(TFT_DC, LOW)
-#define CD_DATA digitalWrite(TFT_DC, HIGH)
-#define CS_ACTIVE digitalWrite(TFT_CS, LOW)
-#define CS_IDLE digitalWrite(TFT_CS, HIGH)
-#define RST_ACTIVE digitalWrite(TFT_RST, LOW)
-#define RST_IDLE digitalWrite(TFT_RST, HIGH)
+#define RD_ACTIVE digitalWriteFast(TFT_RD, LOW)
+#define RD_IDLE digitalWriteFast(TFT_RD, HIGH)
+#define WR_ACTIVE digitalWriteFast(TFT_WR, LOW)
+#define WR_IDLE digitalWriteFast(TFT_WR, HIGH)
+#define CD_COMMAND digitalWriteFast(TFT_DC, LOW)
+#define CD_DATA digitalWriteFast(TFT_DC, HIGH)
+#define CS_ACTIVE digitalWriteFast(TFT_CS, LOW)
+#define CS_IDLE digitalWriteFast(TFT_CS, HIGH)
+#define RST_ACTIVE digitalWriteFast(TFT_RST, LOW)
+#define RST_IDLE digitalWriteFast(TFT_RST, HIGH)
 
 #define RD_STROBE \
   {               \

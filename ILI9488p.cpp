@@ -49,6 +49,8 @@ ILI9488p::ILI9488p(void)
   pinMode(TFT_CS, OUTPUT);
   pinMode(TFT_RST, OUTPUT);
 
+  
+
   CS_IDLE;  // Disable CS
   CD_DATA;  // Enable Command
   WR_IDLE;  // Disable WR
