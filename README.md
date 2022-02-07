@@ -17,7 +17,7 @@ https://github.com/adafruit/Adafruit-GFX-Library
 
 ----
 
-# Wiring for 8bit Parallel TFT   
+# Wiring for 16bit Parallel TFT   
 
 You can use any pin.
 
@@ -37,14 +37,14 @@ CS - 10\
 RST - 6
 
 16 bit:
-D8 - 31
-D9 - 30
-D10 - 29
-D11 - 28
-D12 - 27
-D13 - 26
-D14 - 25
-D15 - 24
+D8 - 31\
+D9 - 30\
+D10 - 29\
+D11 - 28\
+D12 - 27\
+D13 - 26\
+D14 - 25\
+D15 - 24\
 ----
 
 # Benchmark using ILI9341(240x320)
