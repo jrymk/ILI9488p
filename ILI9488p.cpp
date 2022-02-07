@@ -91,7 +91,7 @@ void ILI9488p::write8(uint8_t bytes)
 {
   for (int i = 0; i < 8; i++)
   {
-    digitalWrite(_pins[i], (bytes >> i) & 1);
+    digitalWriteFast(_pins[i], (bytes >> i) & 1);
   }
 }
 
@@ -723,7 +723,7 @@ void ILI9488p::pushColors(uint16_t *block, int16_t n, bool first)
 }
 
 void ILI9488p::drawFastVLine(int16_t x, int16_t y, int16_t h,
-                         uint16_t color)
+                             uint16_t color)
 {
 
   // Rudimentary clipping
@@ -735,7 +735,7 @@ void ILI9488p::drawFastVLine(int16_t x, int16_t y, int16_t h,
 }
 
 void ILI9488p::drawFastHLine(int16_t x, int16_t y, int16_t w,
-                         uint16_t color)
+                             uint16_t color)
 {
 
   // Rudimentary clipping
@@ -1192,7 +1192,7 @@ uint8_t ILI9488p::read8(void)
   uint8_t output = 0x00;
   for (int i = 0; i < 8; i++)
   {
-    output |= digitalRead(_pins[i]) << i;
+    output |= digitalReadFast(_pins[i]) << i;
   }
   return output;
 }
@@ -1204,8 +1204,8 @@ uint8_t ILI9488p::read8bits(void)
   WR_IDLE;
   RD_ACTIVE;
 
-  // This delay is required for STM32F4
-  delayMicroseconds(1);
+  // This delay is required for STM32F4 (this is not a STM32F4)
+  // delayMicroseconds(1);
 
   uint8_t result = read8();
   RD_IDLE;
