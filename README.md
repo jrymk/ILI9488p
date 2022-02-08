@@ -21,7 +21,7 @@ https://github.com/adafruit/Adafruit-GFX-Library
 
 You can use any pin.
 
-Default:
+Default:\
 D0 - 41\
 D1 - 40\
 D2 - 39\
@@ -36,7 +36,7 @@ DC - 9 (a.k.a RS on some boards)\
 CS - 10\
 RST - 6
 
-16 bit:
+16 bit:\
 D8 - 31\
 D9 - 30\
 D10 - 29\
@@ -45,13 +45,14 @@ D12 - 27\
 D13 - 26\
 D14 - 25\
 D15 - 24\
+
 ----
 
 # Benchmark using ILI9341(240x320)
 
 \*Teensy 4.1 results are measured at 600MHz on a 320x480 display, which is double the other benchmark contestants.
 |Benchmark|Teensy 4.1 8bit|Teensy 4.1 16bit|STM32F103|STM32F303|STM32F401|STM32F407|STM32F446|ATmega328|
-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 |Screen fill            |107307|77617|2241101|1854703|1208997|647337 |604184 |1379560|
 |Text                   |3781|4673|138955 |106085 |69792  |38303  |35748  |344024 |
 |Lines                  |72065|94473|1337689|999535 |660532 |361830 |337721 |3390180|

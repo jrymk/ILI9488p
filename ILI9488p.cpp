@@ -1,6 +1,6 @@
 #include <ILI9488p.h>
 
-#define MIPI_DCS_REV1 (1 << 0)
+#define MIPI_DCS_REV1 (1 << 0) // using 8 bit command parameters
 #define AUTO_READINC (1 << 1)
 #define READ_BGR (1 << 2)
 #define READ_LOWHIGH (1 << 3)
@@ -17,28 +17,23 @@
 
 static uint8_t is8347 = 0;
 
-// Constructor when using 8080 mode of control.
-ILI9488p::ILI9488p(void)
-    : Adafruit_GFX(TFTWIDTH, TFTHEIGHT)
+ILI9488p::ILI9488p(void) : Adafruit_GFX(TFTWIDTH, TFTHEIGHT)
 {
-
-  // set control pin mode
   pinMode(TFT_RD, OUTPUT);
   pinMode(TFT_WR, OUTPUT);
   pinMode(TFT_DC, OUTPUT);
   pinMode(TFT_CS, OUTPUT);
   pinMode(TFT_RST, OUTPUT);
 
-  CS_IDLE;  // Disable CS
-  CD_DATA;  // Enable Command
-  WR_IDLE;  // Disable WR
-  RD_IDLE;  // Disable RD
-  RST_IDLE; // Disable RST
+  CS_IDLE;
+  CD_DATA;
+  WR_IDLE;
+  RD_IDLE;
+  RST_IDLE;
 
-  // toggle RST low to reset
-  RST_ACTIVE; // Set Reset LOW
+  RST_ACTIVE;
   delay(20);
-  RST_IDLE; // Set Reset HIGH
+  RST_IDLE;
   delay(150);
 
   _pins[0] = TFT_D0;
@@ -60,19 +55,19 @@ ILI9488p::ILI9488p(void)
   _pins[15] = TFT_D15;
 }
 
-void ILI9488p::setWriteDataBus(void)
+void ILI9488p::dataBusWrite(void)
 {
   for (int i = 0; i < 16; i++)
     pinMode(_pins[i], OUTPUT);
 }
 
-void ILI9488p::setReadDataBus(void)
+void ILI9488p::dataBusRead(void)
 {
   for (int i = 0; i < 16; i++)
     pinMode(_pins[i], INPUT);
 }
 
-void ILI9488p::write8(uint8_t bytes)
+void ILI9488p::set8(uint8_t bytes)
 {
   digitalWriteFast(TFT_D0, (bytes >> 0) & 1);
   digitalWriteFast(TFT_D1, (bytes >> 1) & 1);
@@ -82,10 +77,13 @@ void ILI9488p::write8(uint8_t bytes)
   digitalWriteFast(TFT_D5, (bytes >> 5) & 1);
   digitalWriteFast(TFT_D6, (bytes >> 6) & 1);
   digitalWriteFast(TFT_D7, (bytes >> 7) & 1);
-  // delayNanoseconds(1);
+
+  WR_ACTIVE;
+  DELAY;
+  WR_IDLE;
 }
 
-void ILI9488p::write16(uint16_t bytes)
+void ILI9488p::set16(uint16_t bytes)
 {
   digitalWriteFast(TFT_D0, (bytes >> 0) & 1);
   digitalWriteFast(TFT_D1, (bytes >> 1) & 1);
@@ -104,112 +102,236 @@ void ILI9488p::write16(uint16_t bytes)
   digitalWriteFast(TFT_D13, (bytes >> 13) & 1);
   digitalWriteFast(TFT_D14, (bytes >> 14) & 1);
   digitalWriteFast(TFT_D15, (bytes >> 15) & 1);
-}
 
-void ILI9488p::writeCmdByte(uint8_t c)
-{
-  CS_ACTIVE;
-  CD_COMMAND;
-  RD_IDLE;
-  WR_IDLE;
-
-  write16(c);
   WR_ACTIVE;
   DELAY;
   WR_IDLE;
-  CS_IDLE;
 }
 
-void ILI9488p::writeCmdWord(uint16_t c)
+uint8_t ILI9488p::get8(void)
 {
-  CD_COMMAND;
+  uint8_t output = 0x00;
+  output |= digitalReadFast(TFT_D0) << 0;
+  output |= digitalReadFast(TFT_D1) << 1;
+  output |= digitalReadFast(TFT_D2) << 2;
+  output |= digitalReadFast(TFT_D3) << 3;
+  output |= digitalReadFast(TFT_D4) << 4;
+  output |= digitalReadFast(TFT_D5) << 5;
+  output |= digitalReadFast(TFT_D6) << 6;
+  output |= digitalReadFast(TFT_D7) << 7;
+  return output;
+}
+
+uint16_t ILI9488p::get16(void)
+{
+  uint16_t output = 0x0000;
+  output |= digitalReadFast(TFT_D0) << 0;
+  output |= digitalReadFast(TFT_D1) << 1;
+  output |= digitalReadFast(TFT_D2) << 2;
+  output |= digitalReadFast(TFT_D3) << 3;
+  output |= digitalReadFast(TFT_D4) << 4;
+  output |= digitalReadFast(TFT_D5) << 5;
+  output |= digitalReadFast(TFT_D6) << 6;
+  output |= digitalReadFast(TFT_D7) << 7;
+
+  output |= digitalReadFast(TFT_D8) << 8;
+  output |= digitalReadFast(TFT_D9) << 9;
+  output |= digitalReadFast(TFT_D10) << 10;
+  output |= digitalReadFast(TFT_D11) << 11;
+  output |= digitalReadFast(TFT_D12) << 12;
+  output |= digitalReadFast(TFT_D13) << 13;
+  output |= digitalReadFast(TFT_D14) << 14;
+  output |= digitalReadFast(TFT_D15) << 15;
+
+  return output;
+}
+
+uint8_t ILI9488p::read8bits(void)
+{
+  CD_DATA;
   CS_ACTIVE;
-  RD_IDLE;
   WR_IDLE;
+  RD_ACTIVE;
 
-  write16(c);
-  WR_ACTIVE;
-  DELAY;
-  WR_IDLE;
+  delayNanoseconds(10);
+  uint8_t result = get8();
   CS_IDLE;
+  RD_IDLE;
+  return result;
 }
 
-void ILI9488p::WriteCmd(uint16_t c)
+uint16_t ILI9488p::read16bits(void)
 {
-  //  if (_lcd_cmdWidth == 8) writeCmdByte(c & 0xff);
-  //  if (_lcd_cmdWidth == 16) writeCmdWord(c);
-  if (_lcd_capable & MIPI_DCS_REV1)
-  {
-    writeCmdByte(c & 0xff);
-  }
-  else
-  {
-    writeCmdWord(c);
-  }
+  uint16_t data;
+  CD_DATA;
+  CS_ACTIVE;
+  WR_IDLE;
+  RD_ACTIVE;
+  delayNanoseconds(10);
+  data = get16();
+  CS_IDLE;
+  RD_IDLE;
+  return data;
 }
 
-void ILI9488p::writeDataByte(uint8_t c)
+void ILI9488p::write8(uint8_t c)
 {
   CS_ACTIVE;
   CD_DATA;
   RD_IDLE;
   WR_IDLE;
 
-  write16(c);
+  set8(c);
   WR_ACTIVE;
   DELAY;
   WR_IDLE;
   CS_IDLE;
 }
 
-void ILI9488p::writeDataWord(uint16_t c)
+void ILI9488p::write16(uint16_t c)
 {
   CS_ACTIVE;
   CD_DATA;
   RD_IDLE;
   WR_IDLE;
 
-  write16(c);
+  set16(c);
   WR_ACTIVE;
   DELAY;
   WR_IDLE;
   CS_IDLE;
 }
 
-void ILI9488p::WriteCmdData(uint16_t cmd, uint16_t dat)
+void ILI9488p::command(uint8_t cmd)
 {
-  WriteCmd(cmd);
-  writeDataWord(dat);
+  CS_ACTIVE;
+  CD_COMMAND;
+  RD_IDLE;
+  WR_IDLE;
+  set8(cmd);
+
+  CS_IDLE;
 }
 
-void ILI9488p::WriteCmdParamN(uint8_t cmd, int8_t N, uint8_t *block)
+void ILI9488p::commandP1(uint8_t cmd, uint8_t param)
 {
-  writeCmdByte(cmd);
-  while (N-- > 0)
-  {
-    uint8_t u8 = *block++;
-    writeDataByte(u8);
-  }
+  CS_ACTIVE;
+  CD_COMMAND;
+  RD_IDLE;
+  WR_IDLE;
+  set8(cmd);
+
+  CD_DATA;
+  set8(param);
+
+  CS_IDLE;
 }
 
-void ILI9488p::WriteCmdParam4(uint8_t cmd, uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4)
+void ILI9488p::commandD(uint8_t cmd, uint16_t param)
 {
-  uint8_t d[4];
-  d[0] = d1, d[1] = d2, d[2] = d3, d[3] = d4;
-  WriteCmdParamN(cmd, 4, d);
+  CS_ACTIVE;
+  CD_COMMAND;
+  RD_IDLE;
+  WR_IDLE;
+  set8(cmd);
+
+  CD_DATA;
+  set16(param);
+
+  CS_IDLE;
 }
 
-#define TFTLCD_DELAY 0xFFFF
-#define TFTLCD_DELAY8 0x7F
+void ILI9488p::commandP2(uint8_t cmd, uint8_t param1, uint8_t param2)
+{
+  CS_ACTIVE;
+  CD_COMMAND;
+  RD_IDLE;
+  WR_IDLE;
+  set8(cmd);
 
-void ILI9488p::init_table(const void *table, int16_t size)
+  CD_DATA;
+  set8(param1);
+  set8(param2);
+
+  CS_IDLE;
+}
+
+void ILI9488p::commandP4(uint8_t cmd, uint8_t param1, uint8_t param2, uint8_t param3, uint8_t param4)
+{
+  CS_ACTIVE;
+  CD_COMMAND;
+  RD_IDLE;
+  WR_IDLE;
+  set8(cmd);
+
+  CD_DATA;
+  set8(param1);
+  set8(param2);
+  set8(param3);
+  set8(param4);
+
+  CS_IDLE;
+}
+
+void ILI9488p::commandPN(uint8_t cmd, uint8_t len, uint8_t *param)
+{
+  CS_ACTIVE;
+  CD_COMMAND;
+  RD_IDLE;
+  WR_IDLE;
+  set8(cmd);
+
+  CD_DATA;
+  for (uint8_t i = 0; i < len; i++)
+    set8(param[i]);
+
+  CS_IDLE;
+}
+
+void ILI9488p::commandRD(uint8_t cmd, uint16_t *dest, uint16_t len)
+{
+  CS_ACTIVE;
+  CD_COMMAND;
+  RD_IDLE;
+  WR_IDLE;
+  set8(cmd);
+
+  CD_DATA;
+  dataBusRead();
+  for (uint8_t i = 0; i < len; i++)
+    dest[i] = read16bits();
+
+  dataBusWrite();
+  CS_IDLE;
+}
+
+void ILI9488p::commandRN(uint8_t cmd, uint8_t *dest, uint16_t len)
+{
+  CS_ACTIVE;
+  CD_COMMAND;
+  RD_IDLE;
+  WR_IDLE;
+  set8(cmd);
+
+  CD_DATA;
+  dataBusRead();
+  for (uint8_t i = 0; i < len; i++)
+    dest[i] = read8bits();
+
+  dataBusWrite();
+  CS_IDLE;
+}
+
+#define TFTLCD_DELAY 0x7F
+
+void ILI9488p::commandTable(const void *table, int16_t size)
 {
   uint8_t *p = (uint8_t *)table, dat[24]; // R61526 has GAMMA[22]
   while (size > 0)
   {
     uint8_t cmd = pgm_read_byte(p++);
     uint8_t len = pgm_read_byte(p++);
-    if (cmd == TFTLCD_DELAY8)
+    if (cmd == TFTLCD_DELAY)
     {
       delay(len);
       len = 0;
@@ -218,32 +340,14 @@ void ILI9488p::init_table(const void *table, int16_t size)
     {
       for (uint8_t i = 0; i < len; i++)
         dat[i] = pgm_read_byte(p++);
-      WriteCmdParamN(cmd, len, dat);
+      commandPN(cmd, len, dat);
     }
     size -= len + 2;
   }
+  if (size != 0)
+    Serial.printf("Something wrong with command table...\n");
 }
 
-void ILI9488p::init_table16(const void *table, int16_t size)
-{
-  uint16_t *p = (uint16_t *)table;
-  while (size > 0)
-  {
-    uint16_t cmd = pgm_read_word(p++);
-    uint16_t d = pgm_read_word(p++);
-    if (cmd == TFTLCD_DELAY)
-      delay(d);
-    else
-    {
-      writeCmdWord(cmd);
-      writeDataWord(d);
-    }
-    size -= 2 * sizeof(int16_t);
-  }
-}
-
-// The default resolution is 240x320.
-// Use this function for other resolutions.
 void ILI9488p::setResolution(int16_t width, int16_t height)
 {
   _lcd_width = width;
@@ -255,287 +359,40 @@ void ILI9488p::setOffset(int16_t offset)
   _lcd_offset = offset;
 }
 
-void ILI9488p::begin(uint16_t ID)
+void ILI9488p::begin()
 {
-
   int16_t *p16; // so we can "write" to a const protected variable.
   const uint8_t *table8_ads = NULL;
   int16_t table_size;
 
-  // set up 8 bit parallel port to write mode.
-  setWriteDataBus();
+  dataBusWrite();
 
-  // Serial.println("_lcd_width=" + String(_lcd_width) + " _lcd_height=" + String(_lcd_height));
-  // Serial.println("_lcd_offset=" + String(_lcd_offset));
-
-  _lcd_ID = ID;
-  // Serial.print("_lcd_ID=");
-  // Serial.println(_lcd_ID, HEX);
-
-  // this was for 9481, but 9488 basically the same I guess?
+  _lcd_ID = readID();
   _lcd_capable = AUTO_READINC | MIPI_DCS_REV1 | MV_AXIS | READ_BGR;
-common_9481:
-  static const uint8_t ILI9481_regValues[] PROGMEM = {
-      // Atmel MaxTouch
-      0xB0, 1, 0x00,                         // unlocks E0, F0
-      0xB3, 4, 0x02, 0x00, 0x00, 0x00,       // Frame Memory, interface [02 00 00 00]
-      0xB4, 1, 0x00,                         // Frame mode [00]
-      0xD0, 3, 0x07, 0x42, 0x18,             // Set Power [00 43 18] x1.00, x6, x3
-      0xD1, 3, 0x00, 0x07, 0x10,             // Set VCOM  [00 00 00] x0.72, x1.02
-      0xD2, 2, 0x01, 0x02,                   // Set Power for Normal Mode [01 22]
-      0xD3, 2, 0x01, 0x02,                   // Set Power for Partial Mode [01 22]
-      0xD4, 2, 0x01, 0x02,                   // Set Power for Idle Mode [01 22]
-      0xC0, 5, 0x12, 0x3B, 0x00, 0x02, 0x11, // Panel Driving BGR for 1581 [10 3B 00 02 11]
-      0xC1, 3, 0x10, 0x10, 0x88,             // Display Timing Normal [10 10 88]
-      0xC5, 1, 0x03,                         // Frame Rate [03]
-      0xC6, 1, 0x02,                         // Interface Control [02]
-      0xC8, 12, 0x00, 0x32, 0x36, 0x45, 0x06, 0x16, 0x37, 0x75, 0x77, 0x54, 0x0C, 0x00,
-      0xCC, 1, 0x00, // Panel Control [00]
-  };
-  static const uint8_t ILI9481_CPT29_regValues[] PROGMEM = {
-      // 320x430
-      0xB0,
-      1,
-      0x00,
-      0xD0,
-      3,
-      0x07,
-      0x42,
-      0x1C, // Set Power [00 43 18]
-      0xD1,
-      3,
-      0x00,
-      0x02,
-      0x0F, // Set VCOM  [00 00 00] x0.695, x1.00
-      0xD2,
-      2,
-      0x01,
-      0x11, // Set Power for Normal Mode [01 22]
-      0xC0,
-      5,
-      0x10,
-      0x35,
-      0x00,
-      0x02,
-      0x11, // Set Panel Driving [10 3B 00 02 11]
-      0xC5,
-      1,
-      0x03, // Frame Rate [03]
-      0xC8,
-      12,
-      0x00,
-      0x30,
-      0x36,
-      0x45,
-      0x04,
-      0x16,
-      0x37,
-      0x75,
-      0x77,
-      0x54,
-      0x0F,
-      0x00,
-      0xE4,
-      1,
-      0xA0,
-      0xF0,
-      1,
-      0x01,
-      0xF3,
-      2,
-      0x02,
-      0x1A,
-  };
-  static const uint8_t ILI9481_PVI35_regValues[] PROGMEM = {
-      // 320x480
-      0xB0,
-      1,
-      0x00,
-      0xD0,
-      3,
-      0x07,
-      0x41,
-      0x1D, // Set Power [00 43 18]
-      0xD1,
-      3,
-      0x00,
-      0x2B,
-      0x1F, // Set VCOM  [00 00 00] x0.900, x1.32
-      0xD2,
-      2,
-      0x01,
-      0x11, // Set Power for Normal Mode [01 22]
-      0xC0,
-      5,
-      0x10,
-      0x3B,
-      0x00,
-      0x02,
-      0x11, // Set Panel Driving [10 3B 00 02 11]
-      0xC5,
-      1,
-      0x03, // Frame Rate [03]
-      0xC8,
-      12,
-      0x00,
-      0x14,
-      0x33,
-      0x10,
-      0x00,
-      0x16,
-      0x44,
-      0x36,
-      0x77,
-      0x00,
-      0x0F,
-      0x00,
-      0xE4,
-      1,
-      0xA0,
-      0xF0,
-      1,
-      0x01,
-      0xF3,
-      2,
-      0x40,
-      0x0A,
-  };
-  static const uint8_t ILI9481_AUO317_regValues[] PROGMEM = {
-      // 320x480
-      0xB0,
-      1,
-      0x00,
-      0xD0,
-      3,
-      0x07,
-      0x40,
-      0x1D, // Set Power [00 43 18]
-      0xD1,
-      3,
-      0x00,
-      0x18,
-      0x13, // Set VCOM  [00 00 00] x0.805, x1.08
-      0xD2,
-      2,
-      0x01,
-      0x11, // Set Power for Normal Mode [01 22]
-      0xC0,
-      5,
-      0x10,
-      0x3B,
-      0x00,
-      0x02,
-      0x11, // Set Panel Driving [10 3B 00 02 11]
-      0xC5,
-      1,
-      0x03, // Frame Rate [03]
-      0xC8,
-      12,
-      0x00,
-      0x44,
-      0x06,
-      0x44,
-      0x0A,
-      0x08,
-      0x17,
-      0x33,
-      0x77,
-      0x44,
-      0x08,
-      0x0C,
-      0xE4,
-      1,
-      0xA0,
-      0xF0,
-      1,
-      0x01,
-  };
-  static const uint8_t ILI9481_CMO35_regValues[] PROGMEM = {
-      // 320480
-      0xB0,
-      1,
-      0x00,
-      0xD0,
-      3,
-      0x07,
-      0x41,
-      0x1D, // Set Power [00 43 18] 07,41,1D
-      0xD1,
-      3,
-      0x00,
-      0x1C,
-      0x1F, // Set VCOM  [00 00 00] x0.825, x1.32 1C,1F
-      0xD2,
-      2,
-      0x01,
-      0x11, // Set Power for Normal Mode [01 22]
-      0xC0,
-      5,
-      0x10,
-      0x3B,
-      0x00,
-      0x02,
-      0x11, // Set Panel Driving [10 3B 00 02 11]
-      0xC5,
-      1,
-      0x03, // Frame Rate [03]
-      0xC6,
-      1,
-      0x83,
-      0xC8,
-      12,
-      0x00,
-      0x26,
-      0x21,
-      0x00,
-      0x00,
-      0x1F,
-      0x65,
-      0x23,
-      0x77,
-      0x00,
-      0x0F,
-      0x00,
-      0xF0,
-      1,
-      0x01, //?
-      0xE4,
-      1,
-      0xA0, //?SETCABC on Himax
-      0x36,
-      1,
-      0x48, // Memory Access [00]
-      0xB4,
-      1,
-      0x11,
-  };
-  static const uint8_t ILI9481_RGB_regValues[] PROGMEM = {
-      // 320x480
-      0xB0, 1, 0x00,
-      0xD0, 3, 0x07, 0x41, 0x1D,                   // SETPOWER [00 43 18]
-      0xD1, 3, 0x00, 0x2B, 0x1F,                   // SETVCOM  [00 00 00] x0.900, x1.32
-      0xD2, 2, 0x01, 0x11,                         // SETNORPOW for Normal Mode [01 22]
-      0xC0, 6, 0x10, 0x3B, 0x00, 0x02, 0x11, 0x00, // SETPANEL [10 3B 00 02 11]
-      0xC5, 1, 0x03,                               // SETOSC Frame Rate [03]
-      0xC6, 1, 0x80,                               // SETRGB interface control
-      0xC8, 12, 0x00, 0x14, 0x33, 0x10, 0x00, 0x16, 0x44, 0x36, 0x77, 0x00, 0x0F, 0x00,
-      0xF3, 2, 0x40, 0x0A,
-      0xF0, 1, 0x08,
-      0xF6, 1, 0x84,
-      0xF7, 1, 0x80,
-      0x0C, 2, 0x00, 0x55, // RDCOLMOD
-      0xB4, 1, 0x00,       // SETDISPLAY
-      //            0xB3, 4, 0x00, 0x01, 0x06, 0x01,  //SETGRAM simple example
-      0xB3, 4, 0x00, 0x01, 0x06, 0x30, // jpegs example
-  };
-  table8_ads = ILI9481_regValues, table_size = sizeof(ILI9481_regValues);
-  //        table8_ads = ILI9481_CPT29_regValues, table_size = sizeof(ILI9481_CPT29_regValues);
-  //        table8_ads = ILI9481_PVI35_regValues, table_size = sizeof(ILI9481_PVI35_regValues);
-  //        table8_ads = ILI9481_AUO317_regValues, table_size = sizeof(ILI9481_AUO317_regValues);
-  //        table8_ads = ILI9481_CMO35_regValues, table_size = sizeof(ILI9481_CMO35_regValues);
-  //        table8_ads = ILI9481_RGB_regValues, table_size = sizeof(ILI9481_RGB_regValues);
 
-  // Set screen resolution
+  static const uint8_t ILI9488cmdTable[] PROGMEM = {
+      0xB0, 1, 0x00,                   // unlocks DF to FF
+      0xB3, 4, 0x02, 0x00, 0x00, 0x00, // frame memory, interface [02 00 00 00]
+      0xB4, 1, 0x00,                   // frame mode
+      0xD0, 3, 0x07, 0x42, 0x18,       // power settings [library default] x1.00, x6, x3
+      // 0xD0, 3, 0x07, 0x43, 0x15, // power settings [datasheet default] x1.00, x6, x3
+      0xD1, 3, 0x00, 0x07, 0x10,             // VCOM control
+      0xD2, 2, 0x01, 0x02,                   // power setting for normal mode [library default]
+                                             // 0xD2, 2, 0x00, 0x77, // power setting for normal mode [datasheet default]
+      0xD3, 2, 0x01, 0x02,                   // power setting for partial mode [library default]
+                                             // 0xD3, 2, 0x00, 0x77, // power setting for partial mode [datasheet default]
+      0xD4, 2, 0x01, 0x02,                   // power setting for idle mode [library default]
+                                             // 0xD4, 2, 0x00, 0x77, // power setting for idle mode [datasheet default]
+      0xC0, 5, 0x12, 0x3B, 0x00, 0x02, 0x11, // panel driving settings [library default]
+      // 0xC0, 5, 0x00, 0x3B, 0x00, 0x00, 0x11,                                            // panel driving settings [datasheet default]
+      0xC1, 3, 0x10, 0x10, 0x88,                                                        // display timing settings for normal mode
+      0xC5, 1, 0x03,                                                                    // frame rate [72Hz]
+      0xC6, 1, 0x02,                                                                    // interface control
+      0xC8, 12, 0x00, 0x32, 0x36, 0x45, 0x06, 0x16, 0x37, 0x75, 0x77, 0x54, 0x0C, 0x00, // gamma settings [library default]
+                                                                                        // 0xC8, 12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // gamma settings [library default]
+                                                                                        // 0xCC, 1, 0x00, // does not exist on my datasheet
+  };
+
   if (_lcd_width != 0 || _lcd_height != 0)
   {
     p16 = (int16_t *)&HEIGHT;
@@ -544,26 +401,24 @@ common_9481:
     *p16 = _lcd_width;
   }
 
-  if (table8_ads != NULL)
-  {
-    static const uint8_t reset_off[] PROGMEM = {
-        0x01, 0,            // Soft Reset
-        TFTLCD_DELAY8, 150, // .kbv will power up with ONLY reset, sleep out, display on
-        0x28, 0,            // Display Off
-        0x3A, 1, 0x55,      // Pixel read=565, write=565.
-    };
-    static const uint8_t wake_on[] PROGMEM = {
-        0x11, 0, // Sleep Out
-        TFTLCD_DELAY8, 150,
-        0x29, 0, // Display On
-    };
+  static const uint8_t reset_off[] PROGMEM = {
+      0x01, 0,           // soft reset
+      TFTLCD_DELAY, 150, // .kbv will power up with ONLY reset, sleep out, display on
+      0x3A, 1, 0x55,     // Pixel read=565, write=565.
+      0x28, 0,           // Display Off
+  };
 
-    init_table(&reset_off, sizeof(reset_off));
-    init_table(table8_ads, table_size); // can change PIXFMT
-    init_table(&wake_on, sizeof(wake_on));
-  }
+  static const uint8_t wake_on[] PROGMEM = {
+      0x11, 0, // exit sleep mode
+      // TFTLCD_DELAY,      150,
+      0x29, 0, // Display On
+  };
 
-  setRotation(0); // PORTRAIT
+  commandTable(&reset_off, sizeof(reset_off));
+  commandTable(ILI9488cmdTable, sizeof(ILI9488cmdTable));
+  commandTable(&wake_on, sizeof(wake_on));
+
+  setRotation(0);
   invertDisplay(false);
 }
 
@@ -589,15 +444,15 @@ void ILI9488p::drawPixel(int16_t x, int16_t y, uint16_t color)
 
   if (_lcd_capable & MIPI_DCS_REV1)
   {
-    WriteCmdParam4(_MC, x >> 8, x, x >> 8, x);
-    WriteCmdParam4(_MP, y >> 8, y, y >> 8, y);
+    commandP4(_MC, x >> 8, x, x >> 8, x);
+    commandP4(_MP, y >> 8, y, y >> 8, y);
   }
   else
   {
-    WriteCmdData(_MC, x);
-    WriteCmdData(_MP, y);
+    commandD(_MC, x);
+    commandD(_MP, y);
   }
-  WriteCmdData(_MW, color);
+  commandD(_MW, color);
 }
 
 void ILI9488p::setAddrWindow(uint16_t x, uint16_t y, uint16_t x1, uint16_t y1)
@@ -621,13 +476,13 @@ void ILI9488p::setAddrWindow(uint16_t x, uint16_t y, uint16_t x1, uint16_t y1)
 
   if (_lcd_capable & MIPI_DCS_REV1)
   {
-    WriteCmdParam4(_MC, x >> 8, x, x1 >> 8, x1);
-    WriteCmdParam4(_MP, y >> 8, y, y1 >> 8, y1);
+    commandP4(_MC, x >> 8, x, x1 >> 8, x1);
+    commandP4(_MP, y >> 8, y, y1 >> 8, y1);
   }
   else
   {
-    WriteCmdData(_MC, x);
-    WriteCmdData(_MP, y);
+    commandD(_MC, x);
+    commandD(_MP, y);
     if (_lcd_capable & XSA_XEA_16BIT)
     {
       if (rotation & 1)
@@ -635,10 +490,10 @@ void ILI9488p::setAddrWindow(uint16_t x, uint16_t y, uint16_t x1, uint16_t y1)
       else
         x1 = x = (x1 << 8) | x;
     }
-    WriteCmdData(_SC, x);
-    WriteCmdData(_SP, y);
-    WriteCmdData(_EC, x1);
-    WriteCmdData(_EP, y1);
+    commandD(_SC, x);
+    commandD(_SP, y);
+    commandD(_EC, x1);
+    commandD(_EP, y1);
   }
   //  WriteCmd(_MW); // write to RAM
 }
@@ -670,7 +525,7 @@ void ILI9488p::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t col
   h = end - y;
 
   setAddrWindow(x, y, x + w - 1, y + h - 1);
-  WriteCmd(_MW);
+  command(_MW);
   if (h > w)
   {
     end = h;
@@ -682,7 +537,7 @@ void ILI9488p::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t col
     end = w;
     do
     {
-      writeDataWord(color);
+      write16(color);
     } while (--end != 0);
   }
   if (!(_lcd_capable & MIPI_DCS_REV1) || ((_lcd_ID == 0x1526) && (rotation & 1)))
@@ -696,14 +551,14 @@ void ILI9488p::pushColors8(uint8_t *block, int16_t n, bool first)
 
   if (first)
   {
-    WriteCmd(_MW);
+    command(_MW);
   }
   while (n-- > 0)
   {
     h = (*block++);
     l = (*block++);
     color = h << 8 | l;
-    writeDataWord(color);
+    write16(color);
   }
 }
 
@@ -713,13 +568,11 @@ void ILI9488p::pushColors(uint16_t *block, int16_t n, bool first)
   uint8_t h, l;
 
   if (first)
-  {
-    WriteCmd(_MW);
-  }
+    command(_MW);
   while (n-- > 0)
   {
     color = (*block++);
-    writeDataWord(color);
+    write16(color);
   }
 }
 
@@ -832,7 +685,6 @@ void ILI9488p::drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t
   }
 }
 
-// Pass 8-bit (each) R,G,B, get back 16-bit packed color
 uint16_t ILI9488p::color565(uint8_t r, uint8_t g, uint8_t b)
 {
   return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
@@ -852,11 +704,11 @@ int16_t ILI9488p::readGRAM(int16_t x, int16_t y, uint16_t *block, int16_t w, int
   {
     if (!(_lcd_capable & MIPI_DCS_REV1))
     {
-      WriteCmdData(_MC, x + col);
-      WriteCmdData(_MP, y + row);
+      commandD(_MC, x + col);
+      commandD(_MP, y + row);
     }
-    WriteCmd(_MR);
-    setReadDataBus();
+    command(_MR);
+    dataBusRead();
     CS_ACTIVE;
     CD_DATA;
     WR_IDLE;
@@ -868,21 +720,21 @@ int16_t ILI9488p::readGRAM(int16_t x, int16_t y, uint16_t *block, int16_t w, int
     }
     else if ((_lcd_capable & MIPI_DCS_REV1) || _lcd_ID == 0x1289)
     {
-      r = read8();
+      r = get8();
     }
     else
     {
       dummy = read16bits();
     }
     if (_lcd_ID == 0x1511)
-      r = read8(); // extra dummy for R61511
+      r = get8(); // extra dummy for R61511
     while (n)
     {
       if (_lcd_capable & READ_24BITS)
       {
-        r = read8();
-        g = read8();
-        b = read8();
+        r = get8();
+        g = get8();
+        b = get8();
         if (_lcd_capable & READ_BGR)
           ret = color565(b, g, r);
         else
@@ -909,7 +761,7 @@ int16_t ILI9488p::readGRAM(int16_t x, int16_t y, uint16_t *block, int16_t w, int
     }
     RD_IDLE;
     CS_IDLE;
-    setWriteDataBus();
+    dataBusWrite();
   }
   if (!(_lcd_capable & MIPI_DCS_REV1))
     setAddrWindow(0, 0, width() - 1, height() - 1);
@@ -957,97 +809,23 @@ void ILI9488p::setRotation(uint8_t r)
   if (_lcd_capable & INVERT_RGB)
     val ^= 0x08;
 
-  if (_lcd_capable & MIPI_DCS_REV1)
+  if (val & 0x80)
+    val |= 0x01; // GS
+  if ((val & 0x40))
+    val |= 0x02; // SS
+  if (_lcd_ID == 0x1963)
+    val &= ~0xC0;
+  if (_lcd_ID == 0x9481)
+    val &= ~0xD0;
+  if (_lcd_ID == 0x1511)
   {
-    if (_lcd_ID == 0x6814)
-    {                                   //.kbv my weird 0x9486 might be 68140
-      GS = (val & 0x80) ? (1 << 6) : 0; // MY
-      SS = (val & 0x40) ? (1 << 5) : 0; // MX
-      val &= 0x28;                      // keep MV, BGR, MY=0, MX=0, ML=0
-      d[0] = 0;
-      d[1] = GS | SS | 0x02; // MY, MX
-      d[2] = 0x3B;
-      WriteCmdParamN(0xB6, 3, d);
-      goto common_MC;
-    }
-    else if (_lcd_ID == 0x1963 || _lcd_ID == 0x9481 || _lcd_ID == 0x1511)
-    {
-      if (val & 0x80)
-        val |= 0x01; // GS
-      if ((val & 0x40))
-        val |= 0x02; // SS
-      if (_lcd_ID == 0x1963)
-        val &= ~0xC0;
-      if (_lcd_ID == 0x9481)
-        val &= ~0xD0;
-      if (_lcd_ID == 0x1511)
-      {
-        val &= ~0x10; // remove ML
-        val |= 0xC0;  // force penguin 180 rotation
-      }
-      //            val &= (_lcd_ID == 0x1963) ? ~0xC0 : ~0xD0; //MY=0, MX=0 with ML=0 for ILI9481
-      goto common_MC;
-    }
-    else if (is8347)
-    {
-      _MC = 0x02, _MP = 0x06, _MW = 0x22, _SC = 0x02, _EC = 0x04, _SP = 0x06, _EP = 0x08;
-      if (_lcd_ID == 0x5252)
-      {
-        val |= 0x02; // VERT_SCROLLON
-        if (val & 0x10)
-          val |= 0x04; // if (ML) SS=1 kludge mirror in XXX_REV modes
-      }
-      goto common_BGR;
-    }
-  common_MC:
-    _MC = 0x2A, _MP = 0x2B, _MW = 0x2C, _SC = 0x2A, _EC = 0x2A, _SP = 0x2B, _EP = 0x2B;
-  common_BGR:
-    WriteCmdParamN(is8347 ? 0x16 : 0x36, 1, &val);
-    _lcd_madctl = val;
-    //       if (_lcd_ID    == 0x1963) WriteCmdParamN(0x13, 0, NULL);   //NORMAL mode
+    val &= ~0x10; // remove ML
+    val |= 0xC0;  // force penguin 180 rotation
   }
-
-  else
-  {
-    uint16_t GS, SS, ORG, REV = _lcd_rev;
-    switch (_lcd_ID)
-    {
-    case 0x5420:
-    case 0x7793:
-    case 0x9326:
-    case 0xB509:
-      _MC = 0x200, _MP = 0x201, _MW = 0x202, _SC = 0x210, _EC = 0x211, _SP = 0x212, _EP = 0x213;
-      GS = (val & 0x80) ? (1 << 15) : 0;
-      uint16_t NL;
-      NL = ((432 / 8) - 1) << 9;
-      if (_lcd_ID == 0x9326 || _lcd_ID == 0x5420)
-        NL >>= 1;
-      WriteCmdData(0x400, GS | NL);
-      goto common_SS;
-    default:
-      _MC = 0x20, _MP = 0x21, _MW = 0x22, _SC = 0x50, _EC = 0x51, _SP = 0x52, _EP = 0x53;
-      GS = (val & 0x80) ? (1 << 15) : 0;
-      WriteCmdData(0x60, GS | 0x2700); // Gate Scan Line (0xA700)
-    common_SS:
-      SS = (val & 0x40) ? (1 << 8) : 0;
-      WriteCmdData(0x01, SS); // set Driver Output Control
-    common_ORG:
-      ORG = (val & 0x20) ? (1 << 3) : 0;
-      if (val & 0x08)
-        ORG |= 0x1000; // BGR
-      _lcd_madctl = ORG | 0x0030;
-      WriteCmdData(0x03, _lcd_madctl); // set GRAM write direction and BGR=1.
-      break;
-    }
-  }
-
-  if ((rotation & 1) && ((_lcd_capable & MV_AXIS) == 0))
-  {
-    uint16_t x;
-    x = _MC, _MC = _MP, _MP = x;
-    x = _SC, _SC = _SP, _SP = x; //.kbv check 0139
-    x = _EC, _EC = _EP, _EP = x; //.kbv check 0139
-  }
+  //            val &= (_lcd_ID == 0x1963) ? ~0xC0 : ~0xD0; //MY=0, MX=0 with ML=0 for ILI9481
+  _MC = 0x2A, _MP = 0x2B, _MW = 0x2C, _SC = 0x2A, _EC = 0x2A, _SP = 0x2B, _EP = 0x2B;
+  commandPN(0x36, 1, &val);
+  _lcd_madctl = val;
 
 #ifdef _DEBUG_
   Serial.println("setRotation:_MC=" + String(_MC, HEX));
@@ -1060,6 +838,7 @@ void ILI9488p::setRotation(uint8_t r)
   Serial.println("setRotation:width=" + String(width()));
   Serial.println("setRotation:height=" + String(height()));
 #endif
+
   setAddrWindow(0, 0, width() - 1, height() - 1);
   vertScroll(0, HEIGHT, 0); // reset scrolling after a rotation
 }
@@ -1091,19 +870,19 @@ void ILI9488p::vertScroll(int16_t top, int16_t scrollines, int16_t offset)
     d[3] = scrollines;
     d[4] = bfa >> 8; // BFA
     d[5] = bfa;
-    WriteCmdParamN(is8347 ? 0x0E : 0x33, 6, d);
+    commandPN(is8347 ? 0x0E : 0x33, 6, d);
     //        if (offset == 0 && rotation > 1) vsp = top + scrollines;   //make non-valid
     d[0] = vsp >> 8; // VSP
     d[1] = vsp;
-    WriteCmdParamN(is8347 ? 0x14 : 0x37, 2, d);
+    commandPN(is8347 ? 0x14 : 0x37, 2, d);
     if (is8347)
     {
       d[0] = (offset != 0) ? (_lcd_ID == 0x8347 ? 0x02 : 0x08) : 0;
-      WriteCmdParamN(_lcd_ID == 0x8347 ? 0x18 : 0x01, 1, d); // HX8347-D
+      commandPN(_lcd_ID == 0x8347 ? 0x18 : 0x01, 1, d); // HX8347-D
     }
     else if (offset == 0 && (_lcd_capable & MIPI_DCS_REV1))
     {
-      WriteCmdParamN(0x13, 0, NULL); // NORMAL i.e. disable scroll
+      commandPN(0x13, 0, NULL); // NORMAL i.e. disable scroll
     }
     return;
   }
@@ -1116,20 +895,20 @@ void ILI9488p::vertScroll(int16_t top, int16_t scrollines, int16_t offset)
     switch (_lcd_ID)
     {
     case 0x7783:
-      WriteCmdData(0x61, _lcd_rev); //! NDL, !VLE, REV
-      WriteCmdData(0x6A, vsp);      // VL#
+      commandD(0x61, _lcd_rev); //! NDL, !VLE, REV
+      commandD(0x6A, vsp);      // VL#
       break;
     case 0x5420:
     case 0x7793:
     case 0x9326:
     case 0xB509:
-      WriteCmdData(0x401, (1 << 1) | _lcd_rev); // VLE, REV
-      WriteCmdData(0x404, vsp);                 // VL#
+      commandD(0x401, (1 << 1) | _lcd_rev); // VLE, REV
+      commandD(0x404, vsp);                 // VL#
       break;
     default:
       // 0x6809, 0x9320, 0x9325, 0x9335, 0xB505 can only scroll whole screen
-      WriteCmdData(0x61, (1 << 1) | _lcd_rev); //! NDL, VLE, REV
-      WriteCmdData(0x6A, vsp);                 // VL#
+      commandD(0x61, (1 << 1) | _lcd_rev); //! NDL, VLE, REV
+      commandD(0x6A, vsp);                 // VL#
       break;
     }
   }
@@ -1154,14 +933,14 @@ void ILI9488p::invertDisplay(boolean i)
       else
         val = _lcd_rev ? 8 : 10; // HX8347-D, G, I: SCROLLON=bit3, INVON=bit1
       // HX8347: 0x01 Display Mode has diff bit mapping for A, D
-      WriteCmdParamN(0x01, 1, &val);
+      commandPN(0x01, 1, &val);
     }
     else
     {
 #if _DEBUG_
       Serial.println("invertDisplay 0x21/20");
 #endif
-      WriteCmdParamN(_lcd_rev ? 0x21 : 0x20, 0, NULL);
+      commandPN(_lcd_rev ? 0x21 : 0x20, 0, NULL);
     }
     return;
   }
@@ -1171,248 +950,37 @@ void ILI9488p::invertDisplay(boolean i)
   case 0x9225: // REV is in reg(0x07) like Samsung
   case 0x9226:
   case 0x0154:
-    WriteCmdData(0x07, 0x13 | (_lcd_rev << 2)); //.kbv kludge
+    commandD(0x07, 0x13 | (_lcd_rev << 2)); //.kbv kludge
     break;
   case 0x5420:
   case 0x7793:
   case 0x9326:
   case 0xB509:
-    WriteCmdData(0x401, (1 << 1) | _lcd_rev); //.kbv kludge VLE
+    commandD(0x401, (1 << 1) | _lcd_rev); //.kbv kludge VLE
     break;
   default:
 #if _DEBUG_
     Serial.println("invertDisplay 0x61");
 #endif
-    WriteCmdData(0x61, _lcd_rev);
+    commandD(0x61, _lcd_rev);
     break;
   }
 }
 
-uint8_t ILI9488p::read8(void)
-{
-  uint8_t output = 0x00;
-  output |= digitalReadFast(TFT_D0) << 0;
-  output |= digitalReadFast(TFT_D1) << 1;
-  output |= digitalReadFast(TFT_D2) << 2;
-  output |= digitalReadFast(TFT_D3) << 3;
-  output |= digitalReadFast(TFT_D4) << 4;
-  output |= digitalReadFast(TFT_D5) << 5;
-  output |= digitalReadFast(TFT_D6) << 6;
-  output |= digitalReadFast(TFT_D7) << 7;
-  return output;
-}
-
-uint16_t ILI9488p::read16(void)
-{
-  uint16_t output = 0x0000;
-  output |= digitalReadFast(TFT_D0) << 0;
-  output |= digitalReadFast(TFT_D1) << 1;
-  output |= digitalReadFast(TFT_D2) << 2;
-  output |= digitalReadFast(TFT_D3) << 3;
-  output |= digitalReadFast(TFT_D4) << 4;
-  output |= digitalReadFast(TFT_D5) << 5;
-  output |= digitalReadFast(TFT_D6) << 6;
-  output |= digitalReadFast(TFT_D7) << 7;
-
-  output |= digitalReadFast(TFT_D8) << 8;
-  output |= digitalReadFast(TFT_D9) << 9;
-  output |= digitalReadFast(TFT_D10) << 10;
-  output |= digitalReadFast(TFT_D11) << 11;
-  output |= digitalReadFast(TFT_D12) << 12;
-  output |= digitalReadFast(TFT_D13) << 13;
-  output |= digitalReadFast(TFT_D14) << 14;
-  output |= digitalReadFast(TFT_D15) << 15;
-
-  return output;
-}
-
-uint8_t ILI9488p::read8bits(void)
-{
-  CD_DATA;
-  CS_ACTIVE;
-  WR_IDLE;
-  RD_ACTIVE;
-
-  // This delay is required for STM32F4 (this is not a STM32F4)
-  // delayMicroseconds(1);
-  delayNanoseconds(10);
-  uint8_t result = read8();
-  CS_IDLE;
-  RD_IDLE;
-  return result;
-}
-
-uint16_t ILI9488p::read16bits(void)
-{
-  /*uint16_t data;
-  CD_DATA;
-  CS_ACTIVE;
-  WR_IDLE;
-  RD_ACTIVE;
-  delayNanoseconds(10);
-  data = read16();
-  CS_IDLE;
-  RD_IDLE;
-  return data;*/
-
-  uint8_t lo;
-  uint8_t hi;
-  CD_DATA;
-  CS_ACTIVE;
-  WR_IDLE;
-  RD_ACTIVE;
-  delayNanoseconds(10);
-  hi = read8();
-  // all MIPI_DCS_REV1 style params are 8-bit
-  delayNanoseconds(10);
-  lo = read8();
-  CS_IDLE;
-  RD_IDLE;
-  return (hi << 8) | lo;
-}
-
-uint16_t ILI9488p::readReg16(uint16_t reg)
-{
-  setWriteDataBus();
-  writeCmdWord(reg);
-  setReadDataBus();
-  uint16_t ret = read16bits();
-  // Serial.print("readReg16 hi=");
-  // Serial.println(hi, HEX);
-
-  setWriteDataBus();
-  return ret;
-}
-
-uint16_t ILI9488p::readReg16Index(uint16_t reg, int8_t index)
-{
-  uint16_t ret;
-  setWriteDataBus();
-  writeCmdWord(reg);
-  setReadDataBus();
-  do
-  {
-    ret = read16bits();
-    // Serial.print("readReg16Index hi=");
-    // Serial.println(hi, HEX);
-
-  } while (--index >= 0); // need to test with SSD1963
-  setWriteDataBus();
-
-  return ret;
-}
-
-uint32_t ILI9488p::readReg32(uint16_t reg)
-{
-  uint16_t h = readReg16Index(reg, 0);
-  uint16_t l = readReg16Index(reg, 1);
-  return ((uint32_t)h << 16) | (l);
-}
-
-uint32_t ILI9488p::readReg40(uint16_t reg)
-{
-  uint16_t h = readReg16Index(reg, 0);
-  uint16_t m = readReg16Index(reg, 1);
-  uint16_t l = readReg16Index(reg, 2);
-  return ((uint32_t)h << 24) | (m << 8) | (l >> 8);
-}
-
 uint16_t ILI9488p::readID(void)
 {
-  uint16_t ret, ret2;
-  uint8_t msb;
-  ret = readReg16(0); // forces a reset() if called before begin()
-  Serial.println("readReg16(0)=0x" + String(ret, HEX));
-  if (ret == 0x5408) // the SPFD5408 fails the 0xD3D3 test.
-    return 0x5408;
-  if (ret == 0x5420) // the SPFD5420 fails the 0xD3D3 test.
-    return 0x5420;
-  if (ret == 0x8989) // SSD1289 is always 8989
-    return 0x1289;
-  ret = readReg16(0x67); // HX8347-A
-  if (ret == 0x4747)
-    return 0x8347;
+  // manual 5.2.3 Read Display ID (04)
+  uint8_t ret04[4];
+  commandRN(0x04, ret04, 4);
+  Serial.printf("LCD module manufacturer ID: %02x\n", ret04[1]);
+  Serial.printf("LCD module/driver version ID: %02x\n", ret04[2]);
+  Serial.printf("LCD module/driver ID: %02x\n", ret04[3]);
 
-  ret = readReg32(0xA1); // SSD1963: [01 57 61 01]
-  Serial.println("readReg32(A1)=0x" + String(ret, HEX));
-  if (ret == 0x6101)
-    return 0x1963;
-  if (ret == 0xFFFF) // R61526: [xx FF FF FF]
-    return 0x1526;   // subsequent begin() enables Command Access
-  //    if (ret == 0xFF00)          //R61520: [xx FF FF 00]
-  //        return 0x1520;          //subsequent begin() enables Command Access
+  // manual 5.3.30 Read ID4 (D3)
+  uint8_t retD3[4];
+  commandRN(0xD3, retD3, 4);
+  uint16_t ID = ((uint16_t)retD3[2] << 8) + retD3[3];
+  Serial.printf("ID: %04x\n", ID);
 
-  ret = readReg40(0xBF);
-  Serial.println("readReg40(BF)=0x" + String(ret, HEX));
-  if (ret == 0x8357) // HX8357B: [xx 01 62 83 57 FF]
-    return 0x8357;
-  if (ret == 0x9481) // ILI9481: [xx 02 04 94 81 FF]
-    return 0x9481;
-  if (ret == 0x1511) //?R61511: [xx 02 04 15 11] not tested yet
-    return 0x1511;
-  if (ret == 0x1520) //?R61520: [xx 01 22 15 20]
-    return 0x1520;
-  if (ret == 0x1526) //?R61526: [xx 01 22 15 26]
-    return 0x1526;
-  if (ret == 0x1581) // R61581:  [xx 01 22 15 81]
-    return 0x1581;
-  if (ret == 0x1400) //?RM68140:[xx FF 68 14 00] not tested yet
-    return 0x6814;
-  ret = readReg32(0xD4);
-  Serial.println("readReg32(D4)=0x" + String(ret, HEX));
-  if (ret == 0x5310) // NT35310: [xx 01 53 10]
-    return 0x5310;
-  ret = readReg40(0xEF); // ILI9327: [xx 02 04 93 27 FF]
-  Serial.println("readReg40(EF)=0x" + String(ret, HEX));
-  if (ret == 0x9327)
-    return 0x9327;
-  ret = readReg32(0xFE) >> 8; // weird unknown from BangGood [04 20 53]
-  Serial.println("readReg32(FE)=0x" + String(ret, HEX));
-  if (ret == 0x2053)
-    return 0x2053;
-  uint32_t ret32 = readReg32(0x04);
-  Serial.println("readReg32(04)=0x" + String(ret32, HEX));
-  msb = ret32 >> 16;
-  ret = ret32;
-//    if (msb = 0x38 && ret == 0x8000) //unknown [xx 38 80 00] with D3 = 0x1602
-#if 0
-    if (msb == 0x00 && ret == 0x8000) { //HX8357-D [xx 00 80 00]
-        Serial.println("pushComman");
-        uint8_t cmds[] = {0xFF, 0x83, 0x57};
-        pushCommand(0xB9, cmds, 3);
-        msb = readReg(0xD0);
-        if (msb == 0x99 || msb == 0x90)
-            return 0x9090;      //BIG CHANGE: HX8357-D was 0x8357
-    }
-#endif
-  //    if (msb == 0xFF && ret == 0xFFFF) //R61526 [xx FF FF FF]
-  //        return 0x1526;          //subsequent begin() enables Command Access
-  if (ret == 0x1526) // R61526 [xx 06 15 26] if I have written NVM
-    return 0x1526;   // subsequent begin() enables Command Access
-  if (ret == 0x8552) // ST7789V: [xx 85 85 52]
-    return 0x7789;
-  if (ret == 0xAC11) //?unknown [xx 61 AC 11]
-    return 0xAC11;
-  //    if (msb == 0x54 && ret == 0x8066)  //RM68140:[xx 54 80 66] But Many different controllers will return same value.
-  //        return 0x6814;
-  ret = readReg32(0xD3); // for ILI9488, 9486, 9340, 9341
-  Serial.println("readReg32(D3)=0x" + String(ret, HEX));
-  msb = ret >> 8;
-  if (msb == 0x93 || msb == 0x94 || msb == 0x98 || msb == 0x77 || msb == 0x16)
-    return ret; // 0x9488, 9486, 9340, 9341, 7796
-  if (ret == 0x00D3 || ret == 0xD3D3)
-    return ret; // 16-bit write-only bus
-  /*
-      msb = 0x12;                 //read 3rd,4th byte.  does not work in parallel
-      pushCommand(0xD9, &msb, 1);
-      ret2 = readReg(0xD3);
-      msb = 0x13;
-      pushCommand(0xD9, &msb, 1);
-      ret = (ret2 << 8) | readReg(0xD3);
-  //    if (ret2 == 0x93)
-          return ret2;
-  */
-  ret = readReg16(0); // 0154, 7783, 9320, 9325, 9335, B505, B509
-  Serial.println("readReg16(0)=0x" + String(ret, HEX));
-  return ret;
+  return ID;
 }

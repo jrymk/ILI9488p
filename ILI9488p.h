@@ -8,8 +8,8 @@
 /*
 To use a different resolution TFT, change this or use setResolution().
 */
-#define TFTWIDTH 240
-#define TFTHEIGHT 320
+#define TFTWIDTH 320
+#define TFTHEIGHT 480
 
 // Color definitions
 #define BLACK 0x0000       /*   0,   0,   0 */
@@ -97,7 +97,7 @@ public:
   ILI9488p(void);
   void setResolution(int16_t width, int16_t height);
   void setOffset(int16_t offset);
-  void begin(uint16_t ID);
+  void begin();
   void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
   void fillScreen(uint16_t color);
   void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color);
@@ -120,29 +120,27 @@ public:
   void invertDisplay(boolean i);
   uint16_t readID(void);
 
+  void command(uint8_t cmd);
+  void commandP1(uint8_t cmd, uint8_t param);
+  void commandD(uint8_t cmd, uint16_t param);
+  void commandP2(uint8_t cmd, uint8_t param1, uint8_t param2);
+  void commandP4(uint8_t cmd, uint8_t param1, uint8_t param2, uint8_t param3, uint8_t param4);
+  void commandPN(uint8_t cmd, uint8_t len, uint8_t *param);
+  void commandRD(uint8_t cmd, uint16_t *dest, uint16_t len);
+  void commandRN(uint8_t cmd, uint8_t *dest, uint16_t len);
+
 private:
-  void setWriteDataBus(void);
-  void setReadDataBus(void);
-  void write8(uint8_t);
-  void write16(uint16_t);
-  void writeCmdByte(uint8_t c);
-  void WriteCmd(uint16_t c);
-  void writeDataByte(uint8_t d);
-  void writeDataWord(uint16_t d);
-  void WriteCmdData(uint16_t cmd, uint16_t dat);
-  void WriteCmdParamN(uint8_t cmd, int8_t N, uint8_t *block);
-  void WriteCmdParam4(uint8_t cmd, uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4);
-  void init_table(const void *table, int16_t size);
-  void init_table16(const void *table, int16_t size);
-  void writeCmdWord(uint16_t c);
-  uint8_t read8(void);
-  uint16_t read16(void);
+  void dataBusWrite(void);
+  void dataBusRead(void);
+  void set8(uint8_t);
+  void set16(uint16_t);
+  void write8(uint8_t d);
+  void write16(uint16_t d);
+  void commandTable(const void *table, int16_t size);
+  uint8_t get8(void);
+  uint16_t get16(void); // not needed
   uint8_t read8bits(void);
-  uint16_t read16bits(void);
-  uint16_t readReg16(uint16_t reg);
-  uint16_t readReg16Index(uint16_t reg, int8_t index);
-  uint32_t readReg32(uint16_t reg);
-  uint32_t readReg40(uint16_t reg);
+  uint16_t read16bits(void); // not needed
   uint16_t _lcd_ID, _lcd_capable, _lcd_rev, _lcd_madctl, _lcd_drivOut, _MC, _MP, _MW, _SC, _EC, _SP, _EP;
   int16_t _lcd_width = 0, _lcd_height = 0, _lcd_offset = 0;
   uint32_t _pins[16];
